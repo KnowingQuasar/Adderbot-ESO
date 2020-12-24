@@ -2,6 +2,10 @@
 {
     public static class RaidTypes
     {
+        public const string Trial = "trial";
+        public const string FourMan = "4man";
+        public const string Arena = "arena";
+        public const string Dungeon = "dungeon";
         public const string Aa = "AA";
         public const string Hrc = "HRC";
         public const string So = "SO";
