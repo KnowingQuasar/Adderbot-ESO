@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 namespace Adderbot.Helpers
 {
@@ -114,7 +115,14 @@ namespace Adderbot.Helpers
 
         public static DateTime ParseTime(string date, string time, string timezone)
         {
-            return !DateTime.TryParse(date + " " + time + " " + GetTimeZone(timezone), out var dt) ? DateTime.UnixEpoch : dt;
+            if (!Regex.IsMatch(time, @"(\d+|(\d+:\d+))(am|pm|AM|PM)")) return DateTime.UnixEpoch;
+            if (Regex.IsMatch(date, @"\d+/\d+"))
+            {
+                date += "/" + DateTime.Now.Year;
+            }
+
+            if (!Regex.IsMatch(date, @"\d+/\d+/\d+")) return DateTime.UnixEpoch;
+            return DateTime.TryParse(date + " " + time + " " + GetTimeZone(timezone), out var dt) ? dt : DateTime.UnixEpoch;
         }
     }
 }

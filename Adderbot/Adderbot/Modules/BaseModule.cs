@@ -172,30 +172,32 @@ namespace Adderbot.Modules
                         // If the raid is not @everyone or does not have an AllowedRole
                         await SendMessageToUser(
                             $"You aren't allowed to join this raid, please message <@{raid.Lead}> for more information.");
+                        return;
                     }
-                    else if (raid.CurrentPlayers.Any(x => x.PlayerId == Context.User.Id))
+
+                    var adderPlayer = raid.CurrentPlayers.FirstOrDefault(x => x.PlayerId == Context.User.Id);
+                    
+                    if (adderPlayer != null)
                     {
-                        // Send error message if user is already in the raid
-                        await SendMessageToUser(MessageText.Error.AlreadyInRaid);
+                        // Remove the player from the raid
+                        raid.CurrentPlayers.Remove(adderPlayer);
                     }
-                    else
+                    
+                    try
                     {
-                        try
-                        {
-                            // Add the new player to the raid
-                            raid.AddPlayer(user.Id, role, ValidateEmoteValid(emote).Result);
-                            // Redraw raid
-                            await RedrawRaid();
-                        }
-                        catch (ArgumentException ae)
-                        {
-                            // If AddPlayer ran into error, send error message
-                            await SendMessageToUser(ae.Message);
-                        }
-                        catch (Exception e)
-                        {
-                            await Console.Error.WriteLineAsync(e.Message);
-                        }
+                        // Add the new player to the raid
+                        raid.AddPlayer(user.Id, role, ValidateEmoteValid(emote).Result);
+                        // Redraw raid
+                        await RedrawRaid();
+                    }
+                    catch (ArgumentException ae)
+                    {
+                        // If AddPlayer ran into error, send error message
+                        await SendMessageToUser(ae.Message);
+                    }
+                    catch (Exception e)
+                    {
+                        await Console.Error.WriteLineAsync(e.Message);
                     }
                 }
             }

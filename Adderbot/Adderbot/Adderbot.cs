@@ -26,7 +26,7 @@ namespace Adderbot
         public const string TestToken = "AdderbotTest";
         public const string LiveFile = @"C:\Adderbot\adderbot.json";
         public const string TestFile = @"C:\Adderbot\adderbot-test.json";
-        public const bool IsLive = true;
+        public const bool IsLive = false;
         private readonly IConfiguration _config;
         private DiscordSocketClient _client;
 
@@ -38,7 +38,7 @@ namespace Adderbot
             412466947683385344,
             548657326018527200
         };
-        
+
         public static string[] EmoteNames =
         {
             "denhealer", "dkhealer", "nbhealer", "plarhealer", "sorchealer", "necrohealer",
@@ -66,18 +66,18 @@ namespace Adderbot
             client.Ready += ReadyAsync;
             services.GetRequiredService<CommandService>().Log += LogAsync;
             await _client.SetGameAsync(";help for commands");
-            
+
             _client.GuildAvailable += ValidateGuilds;
             _client.JoinedGuild += ValidateGuilds;
             _client.ChannelDestroyed += ValidateChannels;
             _client.LeftGuild += RemoveGuild;
             _client.MessageDeleted += ValidateGuilds;
             _client.UserLeft += RemoveUser;
-            
+
             LoadJson();
 
             RandomGen = new Random();
-                
+
             await client.LoginAsync(TokenType.Bot, _config["Token"]);
             await client.StartAsync();
 
@@ -132,10 +132,28 @@ namespace Adderbot
             Console.WriteLine($"Connected as: {_client.CurrentUser}");
             return Task.CompletedTask;
         }
-        
-         private static Task RemoveUser(SocketGuildUser user)
+
+        private static Task RemoveUser(SocketGuildUser user)
         {
             var raidsToRemoveUserFrom = GuildHelper.FindRaidsUserIsIn(user.Guild, user.Id);
+            foreach (var raidChannel in raidsToRemoveUserFrom)
+            {
+                var raid = raidChannel.Raid;
+                // Retrieve the AdderPlayer for the current raid, if they are in it
+                var adderPlayer = raid.CurrentPlayers.FirstOrDefault(x => x.PlayerId == user.Id);
+                if (adderPlayer != null)
+                {
+                    // Remove the player from the raid
+                    raid.CurrentPlayers.Remove(adderPlayer);
+                    ((IUserMessage) (user.Guild.GetTextChannel(raidChannel.ChannelId)).GetMessageAsync(
+                        raid.MessageId).Result).ModifyAsync(x =>
+                    {
+                        x.Embed = raid.BuildEmbed();
+                        x.Content = raid.BuildAllowedRoles();
+                    });
+                }
+            }
+
             return Task.CompletedTask;
         }
 
@@ -234,7 +252,7 @@ namespace Adderbot
 
             Save();
         }
-        
+
         private static void LoadJson()
         {
             try
