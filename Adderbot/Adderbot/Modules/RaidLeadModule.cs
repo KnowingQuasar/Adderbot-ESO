@@ -7,7 +7,6 @@ using Adderbot.Helpers;
 using Adderbot.Models;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 
 namespace Adderbot.Modules
 {
